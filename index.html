@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <style>
     html, body, #map { height: 100%; margin: 0; padding: 0; }
+    .leaflet-tooltip { font-size: 1.1em; font-weight: bold; color: #222; background: rgba(255,255,255,0.85); border-radius: 6px; padding: 2px 8px;}
   </style>
 </head>
 <body>
@@ -15,7 +16,8 @@
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-{
+// ===================== GEOJSON DATA =======================
+var geojsonData = {
   "type": "FeatureCollection",
   "features": [
     {
@@ -379,8 +381,7 @@
       }
     }
   ]
-}
-
+};
 
 // ================== BASE MAP PILIHAN =====================
 var streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -433,6 +434,24 @@ L.geoJSON(geojsonData, {
   onEachFeature: function(feature, layer) {
     if (feature.properties && feature.properties.name) {
       layer.bindPopup(feature.properties.name);
+
+      // Tambahkan tooltip label angka jarak di dekat garis (centroid)
+      var jarak = feature.properties.name.match(/\d+/);
+      if (jarak) {
+        // Cari centroid polygon
+        var coords = feature.geometry.coordinates[0];
+        var latSum = 0, lngSum = 0;
+        for (var i = 0; i < coords.length; i++) {
+          lngSum += coords[i][0];
+          latSum += coords[i][1];
+        }
+        var lat = latSum / coords.length;
+        var lng = lngSum / coords.length;
+        var tooltip = L.marker([lat, lng], {opacity:0.01, interactive: false})
+          .addTo(map)
+          .bindTooltip(jarak[0] + " m", {permanent: true, direction: 'center', className: 'leaflet-tooltip'})
+          .openTooltip();
+      }
     }
   }
 }).addTo(map);
